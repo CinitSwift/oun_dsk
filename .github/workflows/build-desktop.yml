@@ -1,0 +1,108 @@
+name: Build Desktop Apps
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos:
+    name: Build macOS DMG
+    runs-on: macos-14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --engine-strict
+
+      - name: Verify Electron binary
+        run: test -x node_modules/electron/dist/Electron.app/Contents/MacOS/Electron
+
+      - name: Build web assets
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check desktop scripts
+        run: node --check desktop/main.cjs && node --check desktop/preload.cjs
+
+      - name: Build macOS app
+        run: pnpm desktop:build:mac
+
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: oun-macos-dmg
+          path: release/*.dmg
+          if-no-files-found: error
+          retention-days: 14
+
+  windows:
+    name: Build Windows NSIS
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --engine-strict
+
+      - name: Verify Electron binary
+        shell: pwsh
+        run: |
+          if (-not (Test-Path 'node_modules/electron/dist/electron.exe')) {
+            throw 'Electron binary not installed'
+          }
+
+      - name: Build web assets
+        run: pnpm build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check desktop scripts
+        shell: pwsh
+        run: |
+          node --check desktop/main.cjs
+          node --check desktop/preload.cjs
+
+      - name: Build Windows app
+        run: pnpm desktop:build:win
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: oun-windows-x64-nsis
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 14
