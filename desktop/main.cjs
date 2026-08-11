@@ -55,6 +55,9 @@ async function initializeApplication() {
   }
 
   createTray()
+  if (process.platform === 'win32') {
+    Menu.setApplicationMenu(null)
+  }
   createMainWindow()
 }
 
