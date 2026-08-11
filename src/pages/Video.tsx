@@ -16,6 +16,7 @@ import { useApiStore } from '@/store/apiStore'
 import { useViewingHistoryStore } from '@/store/viewingHistoryStore'
 import { useSettingStore } from '@/store/settingStore'
 import { useDocumentTitle } from '@/hooks'
+import { getMediaUrl } from '@/config/proxy-url'
 import { ArrowUpIcon, ArrowDownIcon } from '@/components/icons'
 import _ from 'lodash'
 import { toast } from 'sonner'
@@ -231,9 +232,10 @@ export default function Video() {
     }
 
     // 创建新的播放器实例
+    const mediaUrl = getMediaUrl(detail.episodes[selectedEpisode])
     const art = new Artplayer({
       container: containerRef.current,
-      url: detail.episodes[selectedEpisode],
+      url: mediaUrl,
       volume: 0.7,
       isLive: false,
       muted: false,
@@ -270,12 +272,12 @@ export default function Video() {
               ? { loader: CustomHlsJsLoader as unknown as typeof Hls.DefaultConfig.loader }
               : {}
             const hls = new Hls(hlsConfig)
-            hls.loadSource(url)
+            hls.loadSource(getMediaUrl(url))
             hls.attachMedia(video)
             artWithHls.hls = hls
             art.on('destroy', () => hls.destroy())
           } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            video.src = url
+            video.src = getMediaUrl(url)
           } else {
             art.notice.show = 'Unsupported playback format: m3u8'
           }

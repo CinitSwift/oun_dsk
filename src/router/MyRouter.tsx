@@ -12,6 +12,7 @@ const Video = lazy(() => import('@/pages/Video'))
 import { useApiStore } from '@/store/apiStore'
 import { useSearchStore } from '@/store/searchStore'
 import { INITIAL_VIDEO_SOURCES_VERSION } from '@/config/api.config'
+import { isAndroidApp } from '@/config/proxy-url'
 import { useEffect } from 'react'
 
 import AuthGuard from '@/components/AuthGuard'
@@ -70,7 +71,7 @@ function AnimatedRoutes({ children }: { children: React.ReactNode }) {
 }
 
 export default function MyRouter({ children }: { children: React.ReactNode }) {
-  const Router = window.ounDesktop ? HashRouter : BrowserRouter
+  const Router = window.ounDesktop || isAndroidApp() ? HashRouter : BrowserRouter
 
   return (
     <Router>
