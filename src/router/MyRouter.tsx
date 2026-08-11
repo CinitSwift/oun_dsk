@@ -11,9 +11,12 @@ const Video = lazy(() => import('@/pages/Video'))
 
 import { useApiStore } from '@/store/apiStore'
 import { useSearchStore } from '@/store/searchStore'
+import { INITIAL_VIDEO_SOURCES_VERSION } from '@/config/api.config'
 import { useEffect } from 'react'
 
 import AuthGuard from '@/components/AuthGuard'
+
+const INITIAL_VIDEO_SOURCES_VERSION_KEY = 'initialVideoSourcesVersion'
 
 function AnimatedRoutes({ children }: { children: React.ReactNode }) {
   const location = useLocation()
@@ -24,12 +27,14 @@ function AnimatedRoutes({ children }: { children: React.ReactNode }) {
     // 清理过期的搜索缓存
     cleanExpiredCache()
 
-    // 检查是否需要初始化
-    const needsInitialization = localStorage.getItem('envSourcesInitialized') !== 'true'
+    // 按默认源版本执行一次初始化，避免重复恢复用户主动删除的源
+    const initializedVersion = localStorage.getItem(INITIAL_VIDEO_SOURCES_VERSION_KEY)
+    const needsInitialization = initializedVersion !== INITIAL_VIDEO_SOURCES_VERSION
     if (needsInitialization) {
-      // 初始化环境变量中的视频源
-      initializeEnvSources()
-      localStorage.setItem('envSourcesInitialized', 'true')
+      void initializeEnvSources().then(() => {
+        localStorage.setItem(INITIAL_VIDEO_SOURCES_VERSION_KEY, INITIAL_VIDEO_SOURCES_VERSION)
+        localStorage.removeItem('envSourcesInitialized')
+      })
     }
   }, [initializeEnvSources, cleanExpiredCache])
 

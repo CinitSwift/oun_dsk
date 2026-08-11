@@ -27,7 +27,7 @@ interface ApiActions {
   // 取消全选
   deselectAllAPIs: () => void
   // 初始化环境变量中的视频源
-  initializeEnvSources: () => void
+  initializeEnvSources: () => Promise<void>
   // 批量导入视频源
   importVideoAPIs: (apis: VideoApi[]) => void
   // 获取选中的视频源
